@@ -39,12 +39,10 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
     
-      - name: Debug OIDC claims
+      - name: Debug OIDC subject
         run: |
           TOKEN=$(curl -sH "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
-          PAYLOAD=$(echo "$TOKEN" | cut -d. -f2 | tr '_-' '/+' | awk '{print $0 "=="}' | base64 -d 2>/dev/null)
-          echo "SUB: $(echo "$PAYLOAD" | jq -r .sub | sed 's/./& /g')"
-          echo "AUD: $(echo "$PAYLOAD" | jq -r .aud | sed 's/./& /g')"
+          echo "$TOKEN" | python3 -c "import sys,base64,json; t=sys.stdin.read().strip().split('.')[1]; t+='='*(-len(t)%4); c=json.loads(base64.urlsafe_b64decode(t)); print('SUB:', ' '.join(c['sub'])); print('AUD:', c['aud'])"
           
       - name: Check secret
         run: |
