@@ -43,7 +43,15 @@ jobs:
         run: |
           TOKEN=$(curl -sH "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
           echo "$TOKEN" | cut -d. -f2 | tr '_-' '/+' | awk '{print $0 "=="}' | base64 -d 2>/dev/null | jq '{sub, aud, repository}'      
-
+      
+      - name: Check secret
+        run: |
+          echo "ARN length: ${#AWS_OIDC_ARN}"
+          echo "Account ID in secret: $(echo "$AWS_OIDC_ARN" | cut -d: -f5)"
+          echo "Role name in secret: $(echo "$AWS_OIDC_ARN" | cut -d/ -f2)"
+        env:
+          AWS_OIDC_ARN: ${{ secrets.AWS_OIDC_ARN }} 
+      
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ARN }}
